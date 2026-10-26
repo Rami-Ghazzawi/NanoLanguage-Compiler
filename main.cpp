@@ -6,18 +6,22 @@
 #include <cctype>
 
 using namespace std;
-
+// -----------------------------------------------
+// Homework 2
 enum class TokenType
 {
     Keyword,
     Identifier,
-    Integer,
-    Float,
-    Operator,
+    IntegerLiteral,
+    FloatLiteral,
+    ArithmeticOperator,
+    AssignmentOperator,
+    RelationalOperator,
+    LogicalOperator,
     Delimiter,
     Unknown
 };
-
+// ---------------------------------
 struct Token
 {
     TokenType type;
@@ -30,16 +34,31 @@ string tokenTypeToString(TokenType type)
     {
     case TokenType::Keyword:
         return "KEYWORD";
+
     case TokenType::Identifier:
-        return "IDENTIFIER";
-    case TokenType::Integer:
-        return "INTEGER";
-    case TokenType::Float:
-        return "FLOAT";
-    case TokenType::Operator:
-        return "OPERATOR";
+        return "ID";
+
+    case TokenType::IntegerLiteral:
+        return "INT_LITERAL";
+
+    case TokenType::FloatLiteral:
+        return "FLOAT_LITERAL";
+
+    case TokenType::ArithmeticOperator:
+        return "ARITH_OP";
+
+    case TokenType::AssignmentOperator:
+        return "ASSIGN_OP";
+
+    case TokenType::RelationalOperator:
+        return "REL_OP";
+
+    case TokenType::LogicalOperator:
+        return "LOGIC_OP";
+
     case TokenType::Delimiter:
-        return "DELIMITER";
+        return "DELIM";
+
     case TokenType::Unknown:
         return "UNKNOWN";
     }
@@ -49,7 +68,6 @@ string tokenTypeToString(TokenType type)
 
 int main()
 {
-
     ifstream file("source.nl");
 
     if (!file.is_open())
@@ -59,18 +77,21 @@ int main()
     }
 
     unordered_set<string> keywords = {
-        "let", "if", "else", "while",
-        "func", "return", "print", "read",
-        "int", "float"};
+        "let", "func", "if", "else", "while",
+        "return", "print", "read", "int", "float"};
 
     unordered_set<char> delimiters = {
         '(', ')', '{', '}', '[', ']',
-        ';', ',', ':'};
+        ';', ','};
 
-    unordered_set<string> operators = {
-        "+", "-", "*", "/", "%",
-        "=", "==", "!=", "<", ">",
-        "<=", ">=", "&&", "||", "!"};
+    unordered_set<string> arithmeticOperators = {
+        "+", "-", "*", "/", "%"};
+
+    unordered_set<string> relationalOperators = {
+        "==", "!=", "<", ">", "<=", ">="};
+
+    unordered_set<string> logicalOperators = {
+        "&&", "||", "!"};
 
     vector<Token> tokens;
 
@@ -78,12 +99,10 @@ int main()
 
     while (getline(file, line))
     {
-
         size_t i = 0;
 
         while (i < line.length())
         {
-
             // Ignore whitespace
             if (isspace(line[i]))
             {
@@ -100,13 +119,11 @@ int main()
             // Identifier or Keyword
             if (isalpha(line[i]) || line[i] == '_')
             {
-
                 string word;
 
                 while (i < line.length() &&
                        (isalnum(line[i]) || line[i] == '_'))
                 {
-
                     word += line[i];
                     i++;
                 }
@@ -128,7 +145,6 @@ int main()
             // Number
             if (isdigit(line[i]))
             {
-
                 string number;
                 bool isFloat = false;
 
@@ -144,15 +160,14 @@ int main()
                     i + 1 < line.length() &&
                     isdigit(line[i + 1]))
                 {
-
                     isFloat = true;
+
                     number += line[i];
                     i++;
 
                     while (i < line.length() &&
                            isdigit(line[i]))
                     {
-
                         number += line[i];
                         i++;
                     }
@@ -160,12 +175,12 @@ int main()
 
                 if (isFloat)
                 {
-                    tokens.push_back({TokenType::Float,
+                    tokens.push_back({TokenType::FloatLiteral,
                                       number});
                 }
                 else
                 {
-                    tokens.push_back({TokenType::Integer,
+                    tokens.push_back({TokenType::IntegerLiteral,
                                       number});
                 }
 
@@ -175,7 +190,6 @@ int main()
             // Delimiter
             if (delimiters.count(line[i]))
             {
-
                 string delimiter(1, line[i]);
 
                 tokens.push_back({TokenType::Delimiter,
@@ -185,17 +199,23 @@ int main()
                 continue;
             }
 
-            // Operators
-            string op;
-
+            // Check two-character operators
             if (i + 1 < line.length())
             {
                 string twoChars = line.substr(i, 2);
 
-                if (operators.count(twoChars))
+                if (relationalOperators.count(twoChars))
                 {
+                    tokens.push_back({TokenType::RelationalOperator,
+                                      twoChars});
 
-                    tokens.push_back({TokenType::Operator,
+                    i += 2;
+                    continue;
+                }
+
+                if (logicalOperators.count(twoChars))
+                {
+                    tokens.push_back({TokenType::LogicalOperator,
                                       twoChars});
 
                     i += 2;
@@ -203,32 +223,62 @@ int main()
                 }
             }
 
-            // Single character operator
-            op = string(1, line[i]);
+            // Check single-character operators
+            string op(1, line[i]);
 
-            if (operators.count(op))
+            if (arithmeticOperators.count(op))
             {
-
-                tokens.push_back({TokenType::Operator,
+                tokens.push_back({TokenType::ArithmeticOperator,
                                   op});
 
                 i++;
                 continue;
             }
 
-            // Unknown characters
+            if (op == "=")
+            {
+                tokens.push_back({TokenType::AssignmentOperator,
+                                  op});
+
+                i++;
+                continue;
+            }
+
+            if (relationalOperators.count(op))
+            {
+                tokens.push_back({TokenType::RelationalOperator,
+                                  op});
+
+                i++;
+                continue;
+            }
+
+            if (logicalOperators.count(op))
+            {
+                tokens.push_back({TokenType::LogicalOperator,
+                                  op});
+
+                i++;
+                continue;
+            }
+
+            // Unknown character
             tokens.push_back({TokenType::Unknown,
-                              string(1, line[i])});
+                              op});
 
             i++;
         }
     }
 
     file.close();
+
+    // Print tokens
     for (const Token &token : tokens)
     {
         cout << tokenTypeToString(token.type)
-             << "\t" << token.lexeme << endl;
+             << "\t"
+             << token.lexeme
+             << endl;
     }
 
     return 0;

@@ -82,7 +82,7 @@ int main()
 
     unordered_set<char> delimiters = {
         '(', ')', '{', '}', '[', ']',
-        ';', ','};
+        ';', ',', ':'};
 
     unordered_set<string> arithmeticOperators = {
         "+", "-", "*", "/", "%"};
@@ -263,8 +263,7 @@ int main()
             }
 
             // Unknown character
-            tokens.push_back({TokenType::Unknown,
-                              op});
+            tokens.push_back({TokenType::Unknown, op});
 
             i++;
         }

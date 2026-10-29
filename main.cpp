@@ -117,7 +117,7 @@ int main()
             }
 
             // Identifier or Keyword
-            if (isalpha(line[i]) || line[i] == '_')
+            if (isalpha(line[i]))
             {
                 string word;
 
